@@ -1,0 +1,20 @@
+# Environments
+.env
+.venv/
+env/
+__pycache__/
+*.pyc
+
+# Airflow specifics
+logs/
+plugins/
+airflow.db
+
+# Data files (Prevents accidentally pushing raw data to Git)
+*.csv
+*.xlsx
+*.parquet
+*.json
+
+# OS generated files
+.DS_Store
