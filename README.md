@@ -1,10 +1,22 @@
-# AWS Data Engineering Lakehouse Pipeline
-A containerized data pipeline utilizing **Apache Airflow**, **PySpark**, **Docker**, and **AWS S3** adopting a single-bucket Medallion Architecture.
+☁️ E-Commerce Medallion Data Lake (AWS, Airflow, PySpark, Docker)An end-to-end, containerized data engineering pipeline that implements the industry-standard Medallion Architecture (Bronze, Silver, Gold). This project orchestrates PySpark ETL jobs using Apache Airflow to process real-world e-commerce data and load it into a single-bucket Amazon S3 Data Lakehouse.🏗️ Architecture OverviewIngestion (Bronze): Raw e-commerce transaction data (CSV) is manually or systematically dropped into an AWS S3 raw/ folder.Orchestration: An Apache Airflow S3KeySensor constantly monitors the S3 bucket. Upon file arrival, it triggers the PySpark ETL job.Processing (Silver): PySpark cleanses the data (removes nulls, filters bad records), engineers new features (dates, transaction types), handles returns, and writes partitioned Parquet files to the silver/ folder.Aggregation (Gold): PySpark reads the Silver layer and computes business-level metrics (Monthly Sales Performance, Customer Lifetime Value, and Segmentation) saving the finalized Parquet files to the gold/ folder, ready for BI tools like Amazon Athena or Tableau.🛠️ Technology StackContainerization & Environment: Docker, Docker ComposeOrchestration: Apache Airflow (Python)Data Processing: Apache Spark (PySpark)Cloud Storage: Amazon S3Libraries: boto3, hadoop-aws (S3A connector)📊 Medallion Layer Details🥉 Bronze (/raw): The landing zone. Contains the unmodified online_retail.csv containing missing values, returns, and unformatted dates.🥈 Silver (/silver/transactions): The conformed zone.Missing CustomerIDs and invalid UnitPrices are dropped.Dates are cast to proper Timestamps.Returns (negative quantities) are separated from Purchases.Stored as compressed Parquet files, dynamically partitioned by InvoiceYear and InvoiceMonth.🥇 Gold (/gold): The analytics zone.Monthly Sales (/monthly_sales): Calculates Gross Revenue, Total Refunds, and Net Revenue per month.Customer Metrics (/customer_metrics): Calculates Customer Lifetime Value (CLV) and categorizes users into VIP, Premium, or Standard tiers.🚀 Step-by-Step Setup Guide1. PrerequisitesDocker Desktop installed and running on your local machine.An AWS Account with an IAM user that has AmazonS3FullAccess.An Amazon S3 Bucket created (e.g., my-ecom-datalake-2026).2. Configure Environment VariablesCreate a .env file in the root of the project to securely store your AWS credentials. (This file is ignored by Git).AWS_ACCESS_KEY_ID=your_aws_access_key
+AWS_SECRET_ACCESS_KEY=your_aws_secret_key
+AWS_DEFAULT_REGION=us-east-1
+S3_BUCKET_NAME=your-s3-bucket-name
+3. Build and Start the InfrastructureUse the provided Makefile to instantly spin up the Airflow cluster with PySpark dependencies.# Set up local directories
+make setup
 
-## Setup Instructions
-
-1. Update the `.env` file with your AWS credentials and target S3 Bucket name.
-2. Run `make setup` to ensure directories are ready.
-3. Run `make up` to launch the Airflow Docker cluster.
-4. Upload `online_retail.csv` into `s3://your-bucket-name/raw/`.
-5. Access Airflow at `http://localhost:8080` (admin/admin), configure the AWS connection, and trigger the DAG!
+# Build the custom Docker image and start the cluster
+make up
+4. Configure Airflow ConnectionNavigate to http://localhost:8080 (Username: airflow / Password: airflow).Go to Admin > Connections.Add a new connection:Conn Id: aws_defaultConn Type: Amazon Web ServicesAWS Access Key ID: [Your Access Key]AWS Secret Access Key: [Your Secret Key]Save the connection.5. Trigger the Data PipelineGo to the Airflow DAGs page and unpause single_bucket_medallion_pipeline.Download the UCI Online Retail Dataset as a CSV, and rename it to online_retail.csv.In your AWS Console, create a raw/ folder in your S3 bucket and upload the online_retail.csv file there.Watch the Airflow UI automatically detect the file, run the PySpark transformations, and populate your silver/ and gold/ S3 folders!📁 Repository Structure.
+├── dags/
+│   └── s3_spark_pipeline.py       # Airflow DAG definition
+├── jobs/
+│   └── spark_process.py           # PySpark ETL transformation logic
+├── .env                           # Local environment variables (DO NOT COMMIT)
+├── .gitignore                     # Git ignore rules for security
+├── docker-compose.yaml            # Docker infrastructure configuration
+├── Dockerfile                     # Custom Airflow image with Java/Spark
+├── Makefile                       # Helper commands
+├── requirements.txt               # Python dependencies
+└── README.md                      # Project documentation
+Created as a comprehensive Data Engineering Portfolio Project showcasing batch processing, cloud storage integration, and containerized orchestration.
